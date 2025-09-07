@@ -1,1 +1,124 @@
+<!DOCTYPE html>
+<html lang="ca">
+<head>
+  <meta charset="UTF-8">
+  <title>Lectura de piano amb VexFlow</title>
+  <script src="https://unpkg.com/vexflow/releases/vexflow-min.js"></script>
+  <style>
+    body {
+      background: #23243a;
+      color: #f0f0f0;
+      font-family: 'Poppins', sans-serif;
+      text-align: center;
+      padding: 30px;
+    }
+    #main {
+      margin: auto;
+      background: #292a40;
+      padding: 2rem;
+      border-radius: 1rem;
+      width: fit-content;
+    }
+    .vf-container {
+      background: #fff;
+      margin: 2rem auto 1rem auto;
+      border-radius: 0.5rem;
+      width: 600px; min-height: 300px;
+      box-shadow: 0 0 16px #181828;
+    }
+    .note-btn {
+      font-size: 1.3rem;
+      margin: 0.2rem 0.4rem;
+      border-radius: 20px;
+      padding: 0.5rem 1.3rem;
+      cursor: pointer;
+      border: none;
+      background: #E83F89;
+      color: #23243a;
+      font-weight: bold;
+      transition: background 0.2s;
+    }
+    .note-btn:hover {
+      background: #bb86fc;
+    }
+  </style>
+</head>
+<body>
+<div id="main">
+  <h1>Lectura de piano (clau de sol + clau de fa)</h1>
+  <div id="music-container" class="vf-container"></div>
+  <div>
+    <button class="note-btn" onclick="showRandomNotes()">Nova pregunta</button>
+  </div>
+</div>
+<script>
+const VF = Vex.Flow;
+
+function showGrandStaff(trebleNotes, bassNotes) {
+  document.getElementById("music-container").innerHTML = ""; // Netejar
+
+  const div = document.getElementById("music-container");
+  const renderer = new VF.Renderer(div, VF.Renderer.Backends.SVG);
+
+  renderer.resize(560, 250);
+  const context = renderer.getContext();
+
+  // Crear pentagrama superior (clau de sol)
+  const trebleStave = new VF.Stave(40, 40, 470);
+  trebleStave.addClef("treble").setContext(context).draw();
+
+  // Crear pentagrama inferior (clau de fa)
+  const bassStave = new VF.Stave(40, 140, 470);
+  bassStave.addClef("bass").setContext(context).draw();
+
+  // Connector corxet de piano (inici)
+  const connector = new VF.StaveConnector(trebleStave, bassStave);
+  connector.setType(VF.StaveConnector.type.BRACKET);
+  connector.setContext(context).draw();
+
+  // Línia vertical entre pentagrames
+  const lineConn = new VF.StaveConnector(trebleStave, bassStave);
+  lineConn.setType(VF.StaveConnector.type.SINGLE_LEFT);
+  lineConn.setContext(context).draw();
+
+  // Afegir notes al pentagrama de sol
+  const trebleVoice = new VF.Voice({num_beats: 4,  beat_value: 4});
+  trebleVoice.addTickables(
+    trebleNotes.map(note=>
+      new VF.StaveNote({clef: "treble", keys: note, duration: "q"})
+    )
+  );
+  // Afegir notes al pentagrama de fa
+  const bassVoice = new VF.Voice({num_beats: 4,  beat_value: 4});
+  bassVoice.addTickables(
+    bassNotes.map(note =>
+      new VF.StaveNote({clef: "bass", keys: note, duration: "q"})
+    )
+  );
+
+  // Formatació i dibuix de les veus
+  new VF.Formatter()
+    .joinVoices([trebleVoice])
+    .joinVoices([bassVoice])
+    .format([trebleVoice, bassVoice], 400);
+  trebleVoice.draw(context, trebleStave);
+  bassVoice.draw(context, bassStave);
+}
+
+// Exemple: mostra notes aleatòries a cada clau
+function showRandomNotes() {
+  // Llista de notes típiques per a cada clau, en notació VexFlow ("c/4", "g/5", etc.)
+  const treblePool = ["c/4", "d/4", "e/4", "f/4", "g/4", "a/4", "b/4", "c/5", "e/5"];
+  const bassPool = ["c/2", "e/2", "g/2", "a/2", "b/2", "c/3", "e/3", "g/3"];
+
+  // Mostra dues notes en sol, dues en fa (exemple multiplicitat)
+  const get = (pool, n) => Array.from({length:n},()=>[pool[Math.floor(Math.random()*pool.length)]]);
+  showGrandStaff(get(treblePool, 2), get(bassPool, 2));
+}
+
+// Primer renderitzat
+showRandomNotes();
+</script>
+</body>
+</html>
 
